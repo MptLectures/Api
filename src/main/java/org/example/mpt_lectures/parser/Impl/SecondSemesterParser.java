@@ -4,25 +4,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.mpt_lectures.model.Lectures;
 import org.example.mpt_lectures.model.LecturesContent;
-import org.example.mpt_lectures.parser.Parser;
-import org.example.mpt_lectures.service.SecondSemesterService;
+import org.example.mpt_lectures.service.LecturesService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-public class SecondSemesterParser implements Parser {
+@Component
+public class SecondSemesterParser {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     
     private final WebClient webClient;
-    private final SecondSemesterService service;
+    private final LecturesService service;
 
-    public SecondSemesterParser(SecondSemesterService service, WebClient.Builder webClientBuilder, @Value("${notion.api.token}") String TOKEN) {
+    public SecondSemesterParser(LecturesService service, WebClient.Builder webClientBuilder, @Value("${notion.api.token}") String TOKEN) {
         this.service = service;
         this.webClient = webClientBuilder
                 .baseUrl("https://api.notion.com/v1/")
@@ -30,12 +30,19 @@ public class SecondSemesterParser implements Parser {
                 .defaultHeader("Notion-Version", "2022-06-28")
                 .build();
     }
+    
+    /*@PostConstruct
+    public void init() {
+        startParse();
+    }*/
 
+    @Scheduled(fixedRate = 1000)
     public void startParse() {
-        loadPage("928228ff6e9844a59f20445dae52401d")
+        System.out.println("Starting parse");
+        /*loadPage("928228ff6e9844a59f20445dae52401d")
                 .doOnSuccess(aVoid -> System.out.println("Parsing completed successfully"))
                 .doOnError(e -> System.err.println("Parsing failed: " + e.getMessage()))
-                .subscribe();
+                .subscribe();*/
     }
 
 
@@ -54,8 +61,6 @@ public class SecondSemesterParser implements Parser {
                                     processedContent.add(new LecturesContent(id, "icon", icon));
                                 }
                                 
-                                System.out.println(processedContent);
-
                                 return createListContent(data.path("results"))
                                         .map(children -> {
                                             processedContent.addAll(children);
@@ -88,7 +93,6 @@ public class SecondSemesterParser implements Parser {
                     try {
                         return OBJECT_MAPPER.readTree(body);
                     } catch (Exception e) {
-                        System.out.println("Error parsing response: " + e.getMessage());
                         throw new RuntimeException("Failed to parse response", e);
                     }
                 })
@@ -101,12 +105,10 @@ public class SecondSemesterParser implements Parser {
                 .uri(url)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .doOnNext(response -> System.out.println("Response received: " + response))
                 .map(body -> {
                     try {
                         return OBJECT_MAPPER.readTree(String.valueOf(body));
                     } catch (Exception e) {
-                        System.out.println("Error parsing response: " + e.getMessage());
                         throw new RuntimeException("Failed to parse response", e);
                     }
                 })

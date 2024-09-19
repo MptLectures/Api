@@ -3,14 +3,14 @@ package org.example.mpt_lectures.service.Impl;
 import lombok.AllArgsConstructor;
 import org.example.mpt_lectures.model.Lectures;
 import org.example.mpt_lectures.repository.LectureRepository;
-import org.example.mpt_lectures.service.SecondSemesterService;
+import org.example.mpt_lectures.service.LecturesService;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 @Service
 @AllArgsConstructor
-public class MongoSecondServiceImpl implements SecondSemesterService {
+public class MongoServiceImpl implements LecturesService {
 
     private final ReactiveMongoTemplate mongoTemplate;
     private final LectureRepository repository;
