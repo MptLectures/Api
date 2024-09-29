@@ -7,15 +7,20 @@ import org.example.mpt_lectures.model.LecturesContent;
 import org.example.mpt_lectures.service.LecturesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@EnableScheduling
 public class Parser {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
@@ -35,9 +40,9 @@ public class Parser {
 
 
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(cron = "0 32 21 * * ?", zone = "Europe/Moscow")
     public void startParse() {
-        System.out.println("Starting parse");
+        System.out.println("Starting parse in " + LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneId.systemDefault()));
         loadPage("928228ff6e9844a59f20445dae52401d")
                 .doOnSuccess(aVoid -> System.out.println("Parsing completed successfully"))
                 .doOnError(e -> System.err.println("Parsing failed: " + e.getMessage()))
