@@ -13,6 +13,8 @@ import java.util.List;
 public class Lectures {
     @NonNull
     private String id;
+    private Object header;
+    private Object icon;
     @NonNull
     private List<LecturesContent> lecturesContents;
 

@@ -40,9 +40,9 @@ public class Parser {
 
 
 
-    @Scheduled(cron = "0 32 21 * * ?", zone = "Europe/Moscow")
+    @Scheduled(cron = "0 15 17 * * ?", zone = "Europe/Moscow")
     public void startParse() {
-        System.out.println("Starting parse in " + LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneId.systemDefault()));
+        System.out.println("Starting parse");
         loadPage("928228ff6e9844a59f20445dae52401d")
                 .doOnSuccess(aVoid -> System.out.println("Parsing completed successfully"))
                 .doOnError(e -> System.err.println("Parsing failed: " + e.getMessage()))
@@ -55,24 +55,15 @@ public class Parser {
                 .flatMap(data -> {
                     return getData(id, "pages", "")
                             .flatMap(dataPage -> {
-                                Object header = extractHeader(dataPage);
-                                List<LecturesContent> processedContent = new ArrayList<>();
-                                if (header != null) {
-                                    processedContent.add(new LecturesContent(id, "header", header));
-                                }
-                                Object icon = extractIcon(dataPage);
-                                if (icon != null) {
-                                    processedContent.add(new LecturesContent(id, "icon", icon));
-                                }
-                                
                                 return createListContent(data.path("results"))
                                         .map(children -> {
-                                            processedContent.addAll(children);
-                                            System.out.println(processedContent);
-                                            return new Lectures(id, processedContent);
+                                            Lectures lectures = new Lectures(id, children);
+                                            lectures.setHeader(extractHeader(dataPage));
+                                            lectures.setIcon(extractIcon(dataPage));
+                                            return lectures;
                                         })
                                         .flatMap(lecture -> {
-                                            return service.saveLecture(lecture).thenReturn(lecture); 
+                                            return service.saveLecture(lecture).thenReturn(lecture);
                                         })
                                         .then()  
                                         .doOnError(e -> System.err.println("Error in processing: " + e.getMessage()));
@@ -139,8 +130,9 @@ public class Parser {
 
     private Object extractIcon(JsonNode dataPage) {
         try {
-            if (dataPage.has("icon")) {
+            if (dataPage.path("icon").asText() != "null") {
                 String iconType = dataPage.path("icon").path("type").asText();
+                JsonNode icon = dataPage.path("icon").path(iconType);
                 return OBJECT_MAPPER.treeToValue(dataPage.path("icon").path(iconType), Object.class);
             }
         } catch (Exception e) {
