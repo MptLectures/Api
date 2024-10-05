@@ -40,7 +40,7 @@ public class Parser {
 
 
 
-    @Scheduled(cron = "0 15 17 * * ?", zone = "Europe/Moscow")
+    @Scheduled(fixedDelay = 3595)
     public void startParse() {
         System.out.println("Starting parse");
         loadPage("928228ff6e9844a59f20445dae52401d")
